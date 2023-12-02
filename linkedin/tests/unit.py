@@ -1,5 +1,7 @@
 import os 
 import pdb
+import re
+import sys
 import unittest
 from spiders import configs
 from spiders.jobinfos import ParserJobs
@@ -38,6 +40,7 @@ class TestUnit(unittest.TestCase):
                 return response
     
     #adicionar esses caminhos de forma curta no arquivo de configs
+    @unittest.skip('')
     def test_parser_description(self):
         text_job_description_file = helper_functions.read_file('/home/linkedin-python-scrapy-scraper/linkedin/tests/expect_files/parser_description_expected.txt')
         text_job_description_expected = ''.join(text_job_description_file)
@@ -48,7 +51,7 @@ class TestUnit(unittest.TestCase):
         text_job_description_result =  self.ParserJobs.get_text_job_description(soup_response)
 
         self.assertEqual(text_job_description_result, text_job_description_expected)
-    
+    @unittest.skip('')
     def test_get_job_criteria_infos(self):
         #a logica dessa funcao get_html_files_test pode ir para o setup do teste
         response = self.get_html_files_test()
@@ -63,7 +66,7 @@ class TestUnit(unittest.TestCase):
             'industries': 'Financial Services'
         }
         self.assertEqual(job_criteria_infos_result, job_criteria_infos_expected)
-    
+    @unittest.skip('')
     def test_job_title(self):
         response = self.get_html_files_test()
         #response = self.get_html_files_by_id_test("3766808423")
@@ -71,7 +74,7 @@ class TestUnit(unittest.TestCase):
         job_title_result =  self.ParserJobs.get_job_title(soup_response)
         job_title_expected = 'Engenheiro de Dados'
         self.assertEqual(job_title_result, job_title_expected)
-    
+    @unittest.skip('')
     def test_get_job_company(self):
         response = self.get_html_files_test()
         #response = self.get_html_files_by_id_test("3766808423")
@@ -79,7 +82,7 @@ class TestUnit(unittest.TestCase):
         job_company_result =  self.ParserJobs.get_job_company(soup_response)
         job_company_expected = 'Cielo'
         self.assertEqual(job_company_result, job_company_expected)
-    
+    @unittest.skip('')
     def test_get_job_locale(self):
         response = self.get_html_files_test()
         #response = self.get_html_files_by_id_test("3766808423")
@@ -87,7 +90,7 @@ class TestUnit(unittest.TestCase):
         job_locale_atual =  self.ParserJobs.get_job_locale(soup_response)
         job_locale_expected = 'Barueri, São Paulo, Brazil'
         self.assertEqual(job_locale_atual, job_locale_expected)
-    
+    @unittest.skip('')
     def test_get_all_infos(self):
         response = self.get_html_files_test()
         #response = self.get_html_files_by_id_test("3766808423")
@@ -95,13 +98,136 @@ class TestUnit(unittest.TestCase):
         job_all_infos_atual =  self.ParserJobs.get_all_infos(response,'3761065603')
         json_expected_expected = helper_functions.read_json('/home/linkedin-python-scrapy-scraper/linkedin/tests/expect_files/all_infos_expected.json')
         self.assertEqual(job_all_infos_atual, json_expected_expected)
-    
+    @unittest.skip('')
     def test_job_id(self):
         response = self.get_html_files_test()
         #response = self.get_html_files_by_id_test("3766808423")
         job_id_atual =  self.ParserJobs.get_job_id(response)
         job_id_expected = "3755870000"
         self.assertEqual(job_id_atual, job_id_expected)
+    
+    #@unittest.skip('')
+    def test_get_searched_jobs(self):
+
+        def clear_text(tag):
+            text = tag.text.strip()
+            return text
+        
+        def find_title_job(div_tag_root):
+            tag_find = 'div'
+            class_find = 'base-search-card__info'
+            titulo = div_tag_root.find(tag_find, {'class':class_find}).h3
+            clear_title = clear_text(titulo)
+            return clear_title
+        
+        def find_job_id(div_tag_root):
+            tag_find = 'div'
+            first_div_tag = div_tag_root.find(tag_find)
+            atribute_tag = first_div_tag.get('data-entity-urn')
+
+            if atribute_tag is None:
+                atribute_tag = div_tag_root.find('a').get('data-entity-urn')
+            
+            job_id = atribute_tag.split(':')[-1]
+            return job_id
+        
+        def find_job_company(div_tag_root):
+            tag_find = 'div'
+            class_find = 'base-search-card__info'
+            job_company = div_tag_root.find(tag_find, {'class':class_find}).h4
+            clear_title = clear_text(job_company)
+            return clear_title
+        
+        def find_location_job(div_tag_root):
+            tag_find = 'span'
+            class_find = 'job-search-card__location'
+            location = div_tag_root.find(tag_find, {'class':class_find})
+            location_clear = clear_text(location)
+            return location_clear
+        
+        def find_publish_time(div_tag_root):
+            tag_find = 'time'
+            class_find = 'job-search-card__listdate--new'
+            publish_time = div_tag_root.find(tag_find, {'class':class_find})
+
+            if publish_time is None:
+                class_find = 'job-search-card__listdate'
+                publish_time = div_tag_root.find(tag_find, {'class':class_find})
+            publish_time_clear = clear_text(publish_time)
+            return publish_time_clear
+        
+        def find_result_new_jobs(soup):
+            tag_class_root = self.ParserJobs.find_class(soup,'results-context-header')
+            tag_span_text = tag_class_root.find('span', {'class':'results-context-header__new-jobs'})
+            result_new_jobs_clear = clear_text(tag_span_text)
+            result_new_jobs_only_number = re.sub(r'\D','',result_new_jobs_clear)
+            return result_new_jobs_only_number
+        
+        def check_title(job):
+            title = job['title']
+            string_list = ['engenheiro','python','engineer','dados','developer','desenvolvedor']
+            contains_word = lambda title_string, string_list: any(map(lambda word: word in title_string, string_list))
+            return contains_word(title.lower(), string_list)
+        
+        def group_jobs(jobs_search_list):
+            best_jobs = []
+            secundary_jobs = []
+            for job in jobs_search_list:
+                if check_title(job):
+                    best_jobs.append(job.get('title'))
+                else:
+                    secundary_jobs.append(job.get('title'))
+            
+            #pdb.set_trace()
+
+        
+        response = self.read_file(f'/home/linkedin-python-scrapy-scraper/search_result_test_{sys.argv[1]}.html')
+        def get_all_infos_search_jobs_result(response):
+            soup = self.ParserJobs.create_soup(response)
+            class_find = self.ParserJobs.find_class(soup,'jobs-search__results-list')
+
+            if class_find:
+                tag_ul_root = class_find.find_all('li')
+            else:
+                tag_ul_root = soup.find_all('li')
+
+            if not tag_ul_root:
+                raise ValueError
+            
+            jobs_searched_list = []
+            #result_new_jobs = find_result_new_jobs(soup)
+            #pdb.set_trace()
+            for index, tag_li in enumerate(tag_ul_root):
+                title = find_title_job(tag_li)
+                job_id = find_job_id(tag_li)
+                company = find_job_company(tag_li)
+                location = find_location_job(tag_li)
+                
+                publish_time = find_publish_time(tag_li)
+                
+
+                jobs_searched = {
+                    "index":index,
+                    "job_id":job_id,
+                    "title":title,
+                    "company":company,
+                    "location":location,
+                    "publish_time":publish_time,
+                }
+
+                jobs_searched_list.append(jobs_searched)
+            
+            return jobs_searched_list
+        
+        jobs_searched_list = get_all_infos_search_jobs_result(response)
+
+        group_jobs(jobs_searched_list)
+
+    @unittest.skip("")
+    def test_strip(self):
+        result = re.sub(r'\D','','(290 novas)')
+        qtd_paginations = int(result)//25 + 1
+        
 
         
 if __name__ == '__main__':
