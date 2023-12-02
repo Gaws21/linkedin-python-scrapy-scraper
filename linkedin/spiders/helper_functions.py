@@ -1,7 +1,8 @@
 import json
 from spiders import configs
-from spiders import jobinfos
+from spiders.jobinfos import ParserJobs
 
+parser_jobs = ParserJobs()
 def read_file(path):
     job_id_list = None
     with open(path,"r") as job_ids:
@@ -23,5 +24,5 @@ def save_json(data: dict) -> None:
        json.dump(data, job_infos, indent=4,  ensure_ascii=False)
 
 def save_html_response(response: bytes) -> None:
-    job_id = jobinfos.get_job_id(response)
+    job_id = parser_jobs.get_job_id(response)
     save_html(response, job_id)
