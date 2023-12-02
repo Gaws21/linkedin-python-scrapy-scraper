@@ -2,22 +2,15 @@ import pdb
 import re
 from bs4 import BeautifulSoup
 from spiders import configs
-import logging
+from spiders.custom_log import SetUpLogging
+import logging 
 
 class ParserJobs(BeautifulSoup):
-    def __init__(self, name):
-        name = "job_description_spider"
-        logging.basicConfig(
-            filename=f'{name}.log',
-            filemode='w',
-            level=logging.DEBUG,
-            format=configs.LOG_FORMAT
-        )
-
-        self.logger = logging.getLogger(f'{name}')
+    SetUpLogging().setup_logging()
+    
     def create_soup(self, response):
         soup_response = BeautifulSoup(response.text, 'html.parser')
-        self.logger.info("Created Soup")
+        logging.info("Created Soup")
         if soup_response is None:
             
             return None

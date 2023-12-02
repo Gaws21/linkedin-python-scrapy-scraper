@@ -2,7 +2,7 @@ import json
 from spiders import configs
 from spiders.jobinfos import ParserJobs
 
-parser_jobs = ParserJobs("io_functions")
+parser_jobs = ParserJobs()
 def read_file(path):
     job_id_list = None
     with open(path,"r") as job_ids:

@@ -1,7 +1,7 @@
 import logging
 import scrapy
 from spiders import configs
-from spiders import iofunctions
+from spiders import helper_functions
 from spiders.jobinfos import ParserJobs
 
 class JobDescriptionSpider(scrapy.Spider):
@@ -33,13 +33,13 @@ class JobDescriptionSpider(scrapy.Spider):
 
         if response is None:
             raise self.output_callback(TypeError("TypeError for response. The response is None"))
-        iofunctions.save_html_response(response)
+        helper_functions.save_html_response(response)
         return self.extract_job_infos(response)
 
     def extract_job_infos(self, reponse: bytes):
         self.logger.info("Extracting the Job infos.")
         job_infos = self.parser_jobs.get_all_infos(reponse, self.job_id)
-        iofunctions.save_json(job_infos)
+        helper_functions.save_json(job_infos)
         job_infos["collectedStatus"] = 200
         yield self.output_callback(job_infos)
     

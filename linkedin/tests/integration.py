@@ -3,14 +3,14 @@ import sys
 import unittest
 from scrapy.crawler import CrawlerProcess
 from spiders import configs
-from spiders import iofunctions
+from spiders import helper_functions
 from spiders import job_description_spider
 from scrapy.utils.project import get_project_settings
 
 
 class TestIntegration(unittest.TestCase):
     def setUp(self):
-        self.JOB_ID_LIST = iofunctions.read_file(configs.PATH_JOBS_ID_LIST)
+        self.JOB_ID_LIST = helper_functions.read_file(configs.PATH_JOBS_ID_LIST)
         self.outputs = []
         self.process = CrawlerProcess(get_project_settings())
 
