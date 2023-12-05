@@ -116,43 +116,49 @@ class TestUnit(unittest.TestCase):
         def find_title_job(div_tag_root):
             tag_find = 'div'
             class_find = 'base-search-card__info'
-            titulo = div_tag_root.find(tag_find, {'class':class_find}).h3
+            #pdb.set_trace()
+            titulo = div_tag_root.a
             clear_title = clear_text(titulo)
             return clear_title
         
         def find_job_id(div_tag_root):
             tag_find = 'div'
-            first_div_tag = div_tag_root.find(tag_find)
-            atribute_tag = first_div_tag.get('data-entity-urn')
-
-            if atribute_tag is None:
-                atribute_tag = div_tag_root.find('a').get('data-entity-urn')
+            first_div_tag = div_tag_root.find('div',{'data-view-name':'job-card'})
+            atribute_tag = first_div_tag.get('data-job-id')
             
+            ##pdb.set_trace()
             job_id = atribute_tag.split(':')[-1]
             return job_id
         
         def find_job_company(div_tag_root):
-            tag_find = 'div'
-            class_find = 'base-search-card__info'
-            job_company = div_tag_root.find(tag_find, {'class':class_find}).h4
+            tag_find = 'span'
+            class_find = 'job-card-container__primary-description'
+
+            ##pdb.set_trace()
+            job_company = div_tag_root.find(tag_find, {'class':class_find})
             clear_title = clear_text(job_company)
             return clear_title
         
         def find_location_job(div_tag_root):
-            tag_find = 'span'
-            class_find = 'job-search-card__location'
+            tag_find = 'li'
+            class_find = 'job-card-container__metadata-item'
             location = div_tag_root.find(tag_find, {'class':class_find})
+
+            if not location:
+                return None
+            #pdb.set_trace()
             location_clear = clear_text(location)
             return location_clear
         
         def find_publish_time(div_tag_root):
             tag_find = 'time'
-            class_find = 'job-search-card__listdate--new'
-            publish_time = div_tag_root.find(tag_find, {'class':class_find})
-
-            if publish_time is None:
-                class_find = 'job-search-card__listdate'
-                publish_time = div_tag_root.find(tag_find, {'class':class_find})
+            publish_time = div_tag_root.find(tag_find)
+            
+            if not publish_time:
+                return None
+            if publish_time.span:
+                publish_time.span.decompose()
+            
             publish_time_clear = clear_text(publish_time)
             return publish_time_clear
         
@@ -178,25 +184,23 @@ class TestUnit(unittest.TestCase):
                 else:
                     secundary_jobs.append(job.get('title'))
             
-            #pdb.set_trace()
+            pdb.set_trace()
 
         
         response = self.read_file(f'/home/linkedin-python-scrapy-scraper/search_result_test_{sys.argv[1]}.html')
         def get_all_infos_search_jobs_result(response):
             soup = self.ParserJobs.create_soup(response)
-            class_find = self.ParserJobs.find_class(soup,'jobs-search__results-list')
+            class_find = self.ParserJobs.find_class(soup,'scaffold-layout__list-container')
 
-            if class_find:
-                tag_ul_root = class_find.find_all('li')
-            else:
-                tag_ul_root = soup.find_all('li')
-
+            #pdb.set_trace()
+            tag_ul_root = class_find.find_all('li', recursive=False)
+            
             if not tag_ul_root:
                 raise ValueError
             
             jobs_searched_list = []
             #result_new_jobs = find_result_new_jobs(soup)
-            #pdb.set_trace()
+            ##pdb.set_trace()
             for index, tag_li in enumerate(tag_ul_root):
                 title = find_title_job(tag_li)
                 job_id = find_job_id(tag_li)
