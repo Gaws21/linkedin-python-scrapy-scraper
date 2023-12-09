@@ -10,6 +10,9 @@ from scrapy.http import HtmlResponse
 
 class TestUnit(unittest.TestCase):
 
+    best_jobs = open('/home/linkedin-python-scrapy-scraper/best_jobs_09.txt', 'wt')
+    secundary_jobs = open('/home/linkedin-python-scrapy-scraper/secundary_jobs_09.txt', 'wt')
+        
     ParserJobs = ParserJobs()
     #adicionar no helper_functions
     def read_file(self, file_path):
@@ -20,17 +23,25 @@ class TestUnit(unittest.TestCase):
         return response
     
     #adicioar no helper_functions
-    def get_job_files(self):
-        job_files = os.listdir(configs.PATH_JOBS_HTML_COLLECT)
-        full_job_files = [f"{configs.PATH_JOBS_HTML_COLLECT}/{job}" for job in job_files]
+    def get_job_files(self, path=configs.PATH_JOBS_HTML_COLLECT):
+        job_files = os.listdir(path)
+        full_job_files = [f"{path}/{job}" for job in job_files]
         return full_job_files
     
     #melhorar essa logica
-    def get_html_files_test(self, index_initial=0, index_final=1):
-        files = self.get_job_files()
+    def get_html_files_test(self, path=configs.PATH_JOBS_HTML_COLLECT, index_initial=0, index_final=1):
+        files = self.get_job_files(path)
         for file in files[index_initial:index_final]:
             response = self.read_file(file)
         return response
+    
+    def get_all_html_files_test(self, path=configs.PATH_JOBS_HTML_COLLECT):
+        files = self.get_job_files(path)
+        response_list = []
+        for file in files:
+            response = self.read_file(file)
+            response_list.append(response)
+        return response_list
     
     def get_html_files_by_id_test(self, id):
         files = self.get_job_files()
@@ -171,23 +182,27 @@ class TestUnit(unittest.TestCase):
         
         def check_title(job):
             title = job['title']
-            string_list = ['engenheiro','python','engineer','dados','developer','desenvolvedor']
-            contains_word = lambda title_string, string_list: any(map(lambda word: word in title_string, string_list))
-            return contains_word(title.lower(), string_list)
+            string_list = ['engenheir.*dados','python','data engineer','analista.*dados']
+            
+            contains_word = lambda title_string, string_list: map(lambda regex: re.search(regex, title_string), string_list)
+            constains_word_result = contains_word(title.lower(), string_list)
+
+            if not any(constains_word_result):
+                return False
+            return True
         
         def group_jobs(jobs_search_list):
-            best_jobs = []
-            secundary_jobs = []
             for job in jobs_search_list:
-                if check_title(job):
-                    best_jobs.append(job.get('title'))
+                if check_title(job) and job.get('company') not in ['Netvagas','GeekHunter']:
+                    self.best_jobs.write(f'{str(job)}\n')
                 else:
-                    secundary_jobs.append(job.get('title'))
-            
-            pdb.set_trace()
+                    self.secundary_jobs.write(f'{str(job)}\n')
+            #pdb.set_trace()
 
         
-        response = self.read_file(f'/home/linkedin-python-scrapy-scraper/search_result_test_{sys.argv[1]}.html')
+        #response = self.read_file(f'/home/linkedin-python-scrapy-scraper/search_result_test_{sys.argv[1]}.html')
+        
+        
         def get_all_infos_search_jobs_result(response):
             soup = self.ParserJobs.create_soup(response)
             class_find = self.ParserJobs.find_class(soup,'scaffold-layout__list-container')
@@ -223,15 +238,18 @@ class TestUnit(unittest.TestCase):
             
             return jobs_searched_list
         
-        jobs_searched_list = get_all_infos_search_jobs_result(response)
-
-        group_jobs(jobs_searched_list)
+        html_files = self.get_all_html_files_test(f'/home/vagas-09')
+        for index, file in enumerate(html_files):
+            #pdb.set_trace()
+            #response = self.read_file(file)
+            jobs_searched_list = get_all_infos_search_jobs_result(file)
+            group_jobs(jobs_searched_list)
 
     @unittest.skip("")
     def test_strip(self):
         result = re.sub(r'\D','','(290 novas)')
         qtd_paginations = int(result)//25 + 1
-        
+    
 
         
 if __name__ == '__main__':
