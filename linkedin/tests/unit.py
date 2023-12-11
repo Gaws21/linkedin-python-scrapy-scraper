@@ -7,11 +7,16 @@ from spiders import configs
 from spiders.jobinfos import ParserJobs
 from spiders import helper_functions
 from scrapy.http import HtmlResponse
-
+from database import Storage
+import psycopg2
 class TestUnit(unittest.TestCase):
 
-    best_jobs = open('/home/linkedin-python-scrapy-scraper/best_jobs_09.txt', 'wt')
-    secundary_jobs = open('/home/linkedin-python-scrapy-scraper/secundary_jobs_09.txt', 'wt')
+    try:
+        best_jobs = open('/home/linkedin-python-scrapy-scraper/best_jobs_10.txt', 'wt')
+        secundary_jobs = open('/home/linkedin-python-scrapy-scraper/secundary_jobs_10.txt', 'wt')
+    except:
+        best_jobs.close()
+        secundary_jobs.close()
         
     ParserJobs = ParserJobs()
     #adicionar no helper_functions
@@ -117,7 +122,7 @@ class TestUnit(unittest.TestCase):
         job_id_expected = "3755870000"
         self.assertEqual(job_id_atual, job_id_expected)
     
-    #@unittest.skip('')
+    @unittest.skip('')
     def test_get_searched_jobs(self):
 
         def clear_text(tag):
@@ -238,7 +243,7 @@ class TestUnit(unittest.TestCase):
             
             return jobs_searched_list
         
-        html_files = self.get_all_html_files_test(f'/home/vagas-09')
+        html_files = self.get_all_html_files_test(f'/home/vagas-10')
         for index, file in enumerate(html_files):
             #pdb.set_trace()
             #response = self.read_file(file)
@@ -250,7 +255,28 @@ class TestUnit(unittest.TestCase):
         result = re.sub(r'\D','','(290 novas)')
         qtd_paginations = int(result)//25 + 1
     
+    def test_database(self):
+        #conn = psycopg2.connect("dbname='myjobs' user='username' host='localhost' password='password'") 
+        storage = Storage() 
+        query_1 = """
+            DROP TABLE IF EXISTS LinkedinJobs;
+            CREATE TABLE LinkedinJobs(
+                job_id VARCHAR,
+                title VARCHAR,
+                company VARCHAR,
+                location VARCHAR, 
+                publish_time VARCHAR);
+        """
 
+        query_2 = "INSERT INTO LinkedinJobs VALUES ('123','', '','','');"
+
+        query_3 = 'SELECT * FROM LinkedinJobs;'
+        resturn_query = storage.execute_query(query_3)
+        storage.close()
+        print(resturn_query)
+        
+        #print(storage.execute_query("insert into jobs(job_id) values ('alguma_coisa_2');"))
+        #pdb.set_trace()
         
 if __name__ == '__main__':
     unittest.main(argv=[''], exit=False)

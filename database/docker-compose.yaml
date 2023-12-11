@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_DB: myjobs
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - ./myvolume:/docker-entrypoint-initdb.d/myvolume
+      - ./jobs.sql:/docker-entrypoint-initdb.d/jobs.sql
+
+volumes:
+  myvolume:
+
